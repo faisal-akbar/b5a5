@@ -1,0 +1,681 @@
+import httpStatus from "http-status-codes";
+import { Document, Types } from "mongoose";
+import { QueryBuilder } from "../../utils/builder/QueryBuilder";
+import AppError from "../../utils/errorHelpers/AppError";
+import { generateTrackingId } from "../../utils/generateTrackingId";
+import { applyCoupon, validateCoupon } from "../coupon/coupon.utils";
+import { IsActive, Role } from "../user/user.interface";
+import { User } from "../user/user.model";
+import {
+  ICreateParcel,
+  IParcel,
+  ParcelStatus,
+  ParcelType,
+  ShippingType,
+} from "./parcel.interface";
+import { Parcel } from "./parcel.model";
+import {
+  calculateParcelFee,
+  expectedDeliveryDate,
+  isValidStatusTransition,
+  StatusTransitions,
+} from "./parcel.utils";
+
+const addStatusLog = (
+  parcel: Document<unknown, object, IParcel> & IParcel,
+  status: ParcelStatus,
+  updatedBy?: Types.ObjectId,
+  location?: string,
+  note?: string
+) => {
+  const statusLogEntry = {
+    status,
+    location: location || "",
+    note: note || "",
+    updatedBy: updatedBy,
+  };
+
+  if (!parcel.statusLog) {
+    parcel.statusLog = [];
+  }
+  parcel.statusLog.push(statusLogEntry);
+};
+
+// ==================== SENDER SERVICES ====================
+
+const createParcel = async (payload: ICreateParcel, senderId: string) => {
+  const trackingId = generateTrackingId();
+
+  const { weight, receiverEmail, pickupAddress, deliveryAddress, ...rest } =
+    payload;
+
+  // Sender validation
+  const sender = await User.findById(senderId);
+  if (!sender?.phone) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Please Update your phone number in your profile."
+    );
+  }
+
+  const senderAddress = pickupAddress || sender.defaultAddress;
+
+  if (!senderAddress) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Pickup address is required or set a default address in your profile."
+    );
+  }
+
+  // Receiver validation
+  const receiver = await User.findOne({ email: receiverEmail });
+  if (!receiver) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Receiver account is not found");
+  }
+
+  if (receiver.role !== Role.RECEIVER) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Provided user is not a receiver"
+    );
+  }
+
+  if (!receiver.isVerified) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Receiver is not verified, you cannot send parcel to this receiver"
+    );
+  }
+
+  if (
+    receiver.isActive === IsActive.BLOCKED ||
+    receiver.isActive === IsActive.INACTIVE
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Receiver is ${receiver.isActive}. You cannot send parcel to this receiver`
+    );
+  }
+  if (receiver.isDeleted) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Receiver is deleted. You cannot send parcel to this receiver`
+    );
+  }
+
+  const receiverAddress = deliveryAddress || receiver.defaultAddress;
+
+  if (!receiverAddress) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Delivery address is required or request receiver to add a default address in their profile."
+    );
+  }
+  const parcelType = rest.type || ParcelType.PACKAGE;
+  const shippingType = rest.shippingType || ShippingType.STANDARD;
+
+  if (rest.couponCode) {
+    await validateCoupon(rest.couponCode);
+  }
+  const calcParcelFeeWithoutDiscount = calculateParcelFee(
+    weight,
+    parcelType,
+    shippingType
+  );
+
+  const finalFee = rest.couponCode
+    ? await applyCoupon(rest.couponCode, calcParcelFeeWithoutDiscount)
+    : calcParcelFeeWithoutDiscount;
+
+  const estimatedDeliveryDate = expectedDeliveryDate(shippingType);
+
+  const parcel = await Parcel.create({
+    trackingId,
+    type: parcelType,
+    shippingType,
+    weight,
+    sender: senderId,
+    receiver: receiver._id,
+    fee: finalFee,
+    currentStatus: ParcelStatus.REQUESTED,
+    statusLog: [
+      {
+        status: ParcelStatus.REQUESTED,
+        location: senderAddress,
+        note: "Parcel request created by sender",
+        timestamp: new Date(),
+        updatedBy: new Types.ObjectId(senderId),
+      },
+    ],
+    pickupAddress: senderAddress,
+    deliveryAddress: receiverAddress,
+    estimatedDelivery: estimatedDeliveryDate,
+    couponCode: rest.couponCode,
+    ...rest,
+  });
+
+  // Fetch the created parcel with excluded fields
+  const cleanParcel = await Parcel.findById(parcel._id)
+    .select("-receiver -statusLog._id -deliveryPersonnel")
+    .populate("sender", "name email phone _id")
+    .populate("receiver", "name email phone -_id")
+    .populate("statusLog.updatedBy", "name role -_id");
+
+  return cleanParcel;
+};
+
+const cancelParcel = async (senderId: string, id: string, note?: string) => {
+  const parcel = await Parcel.findById(id);
+
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+
+  // Check if sender owns this parcel
+  if (parcel.sender.toString() !== senderId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to cancel this parcel"
+    );
+  }
+
+  // check if parcel is already delivered or cancelled
+  if (parcel.currentStatus === ParcelStatus.CANCELLED) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Parcel is already cancelled");
+  }
+
+  if (
+    parcel.currentStatus === ParcelStatus.DELIVERED ||
+    parcel.currentStatus === ParcelStatus.DISPATCHED ||
+    parcel.currentStatus === ParcelStatus.IN_TRANSIT ||
+    parcel.currentStatus === ParcelStatus.PICKED
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Parcel cannot be cancelled at this stage"
+    );
+  }
+
+  if (parcel.currentStatus === ParcelStatus.BLOCKED) {
+    throw new AppError(httpStatus.FORBIDDEN, "Cannot cancel blocked parcel");
+  }
+
+  if (parcel.currentStatus === ParcelStatus.RETURNED) {
+    throw new AppError(httpStatus.FORBIDDEN, "Cannot cancel returned parcel");
+  }
+
+  // Update parcel status and add tracking event
+  parcel.currentStatus = ParcelStatus.CANCELLED;
+  parcel.estimatedDelivery = null;
+  parcel.deliveredAt = null;
+  parcel.cancelledAt = new Date();
+
+  addStatusLog(
+    parcel,
+    ParcelStatus.CANCELLED,
+    new Types.ObjectId(senderId),
+    parcel?.pickupAddress as string,
+    note
+  );
+
+  await parcel.save();
+
+  // Fetch the created parcel with excluded fields
+  const cleanParcel = await Parcel.findById(parcel._id)
+    .select("-receiver -statusLog._id -deliveryPersonnel")
+    .populate("sender", "name email phone _id")
+    .populate("receiver", "name email phone -_id")
+    .populate("statusLog.updatedBy", "name role -_id");
+
+  return cleanParcel;
+};
+
+const getSenderParcels = async (
+  senderId: string,
+  query: Record<string, string>
+) => {
+  const parcelQuery = new QueryBuilder(
+    Parcel.find({ sender: senderId })
+      .select("-receiver -statusLog._id -deliveryPersonnel")
+      .populate("sender", "name email phone _id")
+      .populate("receiver", "name email phone -_id")
+      .populate("statusLog.updatedBy", "name role -_id"),
+    query
+  )
+    .search(["trackingId", "deliveryAddress", "pickupAddress"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const parcels = await parcelQuery.modelQuery;
+  const meta = await parcelQuery.getMeta();
+
+  return {
+    data: parcels,
+    meta,
+  };
+};
+
+const getParcelWithTrackingHistory = async (
+  parcelId: string,
+  userId: string
+) => {
+  const parcel = await Parcel.findById(parcelId);
+
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+
+  // Authorization check
+  const isOwner =
+    parcel.sender._id.toString() === userId ||
+    parcel.receiver._id.toString() === userId;
+
+  if (!isOwner) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to view this parcel"
+    );
+  }
+
+  const cleanParcel = await Parcel.findById(parcel._id)
+    .select(
+      "-type -weight -weightUnit -shippingType -fee -isPaid -couponCode -receiver -statusLog._id"
+    )
+    .populate("sender", "name email phone -_id")
+    .populate("receiver", "name email phone -_id")
+    .populate("statusLog.updatedBy", "name role -_id");
+
+  return cleanParcel;
+};
+
+// ==================== RECEIVER SERVICES ====================
+
+const getIncomingParcels = async (
+  receiverId: string,
+  query: Record<string, string>
+) => {
+  const parcelQuery = new QueryBuilder(
+    Parcel.find({
+      receiver: receiverId,
+      currentStatus: {
+        $nin: [
+          ParcelStatus.DELIVERED,
+          ParcelStatus.PICKED,
+          ParcelStatus.FLAGGED,
+          ParcelStatus.RETURNED,
+          ParcelStatus.BLOCKED,
+          ParcelStatus.CANCELLED,
+        ],
+      },
+    })
+      .select(
+        "-weight -weightUnit -fee -couponCode -isPaid -sender -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
+      )
+      .populate("sender", "name email phone -_id")
+      .populate("receiver", "name email phone _id"),
+    query
+  )
+    .search(["trackingId", "deliveryAddress", "pickupAddress"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const parcels = await parcelQuery.modelQuery;
+  const meta = await parcelQuery.getMeta();
+
+  return {
+    data: parcels,
+    meta,
+  };
+};
+
+const confirmDelivery = async (parcelId: string, receiverId: string) => {
+  const parcel = await Parcel.findOne({ _id: parcelId });
+
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+
+  if (parcel.receiver.toString() !== receiverId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to confirm this parcel"
+    );
+  }
+
+  if (parcel.currentStatus !== ParcelStatus.IN_TRANSIT) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Parcel must be In-Transit to confirm delivery"
+    );
+  }
+
+  // Update parcel status
+  parcel.currentStatus = ParcelStatus.DELIVERED;
+  parcel.deliveredAt = new Date();
+  parcel.cancelledAt = null;
+
+  addStatusLog(
+    parcel,
+    ParcelStatus.DELIVERED,
+    new Types.ObjectId(receiverId),
+    parcel?.deliveryAddress as string,
+    "Parcel delivered by receiver"
+  );
+
+  await parcel.save();
+
+  // Fetch the updated parcel with excluded fields for receiver
+  const cleanParcel = await Parcel.findById(parcel._id)
+    .select(
+      "-_id -weight -weightUnit -fee -couponCode -isPaid -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
+    )
+    .populate("sender", "name email phone -_id");
+
+  return cleanParcel;
+};
+
+const getDeliveryHistory = async (
+  receiverId: string,
+  query: Record<string, string>
+) => {
+  const parcelQuery = new QueryBuilder(
+    Parcel.find({
+      receiver: receiverId,
+      currentStatus: {
+        $in: [ParcelStatus.DELIVERED, ParcelStatus.PICKED],
+      },
+    })
+      .select(
+        "-weight -weightUnit -fee -couponCode -isPaid -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
+      )
+      .populate("sender", "name email phone -_id")
+      .populate("receiver", "name email phone"),
+    query
+  )
+    .search(["trackingId", "deliveryAddress", "pickupAddress"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const parcels = await parcelQuery.modelQuery;
+  const meta = await parcelQuery.getMeta();
+
+  return {
+    data: parcels,
+    meta,
+  };
+};
+
+// ==================== ADMIN SERVICES ====================
+
+const getAllParcels = async (query: Record<string, string>) => {
+  const parcelQuery = new QueryBuilder(Parcel.find(), query)
+    .search(["trackingId", "name", "deliveryAddress", "pickupAddress"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const parcels = await parcelQuery.modelQuery;
+  const meta = await parcelQuery.getMeta();
+
+  return {
+    data: parcels,
+    meta,
+  };
+};
+
+const updateParcelStatus = async (
+  parcelId: string,
+  adminId: string,
+  payload: {
+    currentStatus?: ParcelStatus;
+    currentLocation?: string;
+    deliveryPersonnelId?: string;
+  }
+) => {
+  const parcel = await Parcel.findById(parcelId);
+
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+
+  if (
+    !payload.currentStatus &&
+    !payload.currentLocation &&
+    !payload.deliveryPersonnelId
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Provide currentStatus, currentLocation or deliveryPersonnelId"
+    );
+  }
+
+  if (
+    payload.currentStatus &&
+    !isValidStatusTransition(parcel.currentStatus, payload.currentStatus)
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Cannot transition from ${parcel.currentStatus} to ${
+        payload.currentStatus
+      }. Valid transitions: ${StatusTransitions[parcel.currentStatus].join(
+        ", "
+      )} from ${parcel.currentStatus}`
+    );
+  }
+
+  // Update parcel status
+  if (payload.currentStatus === ParcelStatus.CANCELLED) {
+    parcel.cancelledAt = new Date();
+  } else {
+    parcel.cancelledAt = null;
+  }
+  if (payload.currentStatus === ParcelStatus.DELIVERED) {
+    parcel.deliveredAt = new Date();
+  } else {
+    parcel.deliveredAt = null;
+  }
+
+  if (payload.currentStatus === ParcelStatus.BLOCKED) {
+    parcel.isBlocked = true;
+  }
+
+  if (payload.deliveryPersonnelId) {
+    // Check if current status allows delivery personnel assignment
+    const validStatusesForPersonnelAssignment = [
+      ParcelStatus.APPROVED,
+      ParcelStatus.PICKED,
+      ParcelStatus.DISPATCHED,
+      ParcelStatus.IN_TRANSIT,
+      ParcelStatus.RESCHEDULED,
+    ];
+
+    const finalStatus = payload.currentStatus || parcel.currentStatus;
+
+    if (!validStatusesForPersonnelAssignment.includes(finalStatus)) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Cannot assign delivery personnel when parcel status is ${finalStatus}. Valid statuses: ${validStatusesForPersonnelAssignment.join(
+          ", "
+        )}`
+      );
+    }
+
+    const deliveryPersonnelId = new Types.ObjectId(payload.deliveryPersonnelId);
+
+    // Validate delivery personnel exists and has correct role
+    const deliveryPersonnel = await User.findById(deliveryPersonnelId);
+    if (
+      !deliveryPersonnel ||
+      deliveryPersonnel.role !== Role.DELIVERY_PERSONNEL
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Invalid delivery personnel ID or not a delivery personnel"
+      );
+    }
+
+    // Check if personnel is active and available
+    if (deliveryPersonnel.isActive !== IsActive.ACTIVE) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Delivery personnel is ${deliveryPersonnel.isActive} and cannot be assigned`
+      );
+    }
+
+    // Add to delivery personnel array if not already present
+    if (
+      Array.isArray(parcel.deliveryPersonnel) &&
+      !parcel.deliveryPersonnel.includes(deliveryPersonnelId)
+    ) {
+      parcel.deliveryPersonnel.push(deliveryPersonnelId);
+
+      // Add status log for personnel assignment
+      addStatusLog(
+        parcel,
+        finalStatus,
+        new Types.ObjectId(adminId),
+        payload.currentLocation || "",
+        `Delivery personnel ${deliveryPersonnel.name} assigned`
+      );
+    }
+  }
+
+  // Update delivery personnel if provided
+  if (payload.deliveryPersonnelId) {
+    const deliveryPersonnelId = new Types.ObjectId(payload.deliveryPersonnelId);
+
+    const deliveryPersonnel = await User.findById(deliveryPersonnelId);
+    if (
+      !deliveryPersonnel ||
+      deliveryPersonnel.role !== Role.DELIVERY_PERSONNEL
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Invalid delivery personnel ID or not a delivery personnel"
+      );
+    }
+    if (
+      Array.isArray(parcel.deliveryPersonnel) &&
+      !parcel.deliveryPersonnel.includes(deliveryPersonnelId)
+    ) {
+      parcel.deliveryPersonnel.push(deliveryPersonnelId);
+    }
+  }
+
+  await parcel.save();
+
+  return parcel;
+};
+
+const blockStatusParcel = async (
+  parcelId: string,
+  adminId: string,
+  payload: {
+    reason?: string;
+    isBlocked: boolean;
+  }
+) => {
+  const parcel = await Parcel.findById(parcelId);
+
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+
+  // check payload status and isBlocked same
+  if (parcel.isBlocked === payload.isBlocked) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Parcel is already in this ${
+        payload.isBlocked ? "blocked" : "unblocked"
+      } status`
+    );
+  }
+
+  parcel.isBlocked = payload.isBlocked;
+
+  if (payload.isBlocked) {
+    parcel.currentStatus = ParcelStatus.BLOCKED;
+  } else {
+    parcel.currentStatus = ParcelStatus.APPROVED;
+  }
+
+  addStatusLog(
+    parcel,
+    payload.isBlocked ? ParcelStatus.BLOCKED : ParcelStatus.APPROVED,
+    new Types.ObjectId(adminId),
+    (parcel?.currentLocation as string) || "",
+    payload.reason || "Parcel blocked by admin."
+  );
+
+  await parcel.save();
+
+  return parcel;
+};
+
+const getParcelById = async (parcelId: string) => {
+  const parcel = await Parcel.findById(parcelId);
+
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+
+  return parcel;
+};
+
+// ==================== PUBLIC SERVICES ====================
+
+const getParcelByTrackingId = async (trackingId: string) => {
+  const parcel = await Parcel.findOne({ trackingId }).select(
+    "trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.updatedAt pickupAddress deliveryAddress deliveredAt"
+  );
+
+  if (!parcel) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Parcel not found with this tracking ID"
+    );
+  }
+
+  // Return limited public information
+  return {
+    trackingId: parcel.trackingId,
+    currentStatus: parcel.currentStatus,
+    estimatedDelivery: parcel.estimatedDelivery,
+    deliveredAt: parcel.deliveredAt,
+    statusLog: parcel.statusLog,
+    pickupAddress: parcel.pickupAddress,
+    deliveryAddress: parcel.deliveryAddress,
+    createdAt: parcel.createdAt,
+  };
+};
+
+export const ParcelService = {
+  // Sender Services
+  createParcel,
+  cancelParcel,
+  getSenderParcels,
+
+  // Receiver Services
+  getIncomingParcels,
+  confirmDelivery,
+  getDeliveryHistory,
+
+  // Admin Services
+  getAllParcels,
+  updateParcelStatus,
+  blockStatusParcel,
+  getParcelById,
+
+  // Public Services
+  getParcelByTrackingId,
+
+  // Shared Services
+  getParcelWithTrackingHistory,
+};
