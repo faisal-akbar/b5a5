@@ -1,3 +1,4 @@
+import { Parcel } from "./parcel.model";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
@@ -25,16 +26,32 @@ const createParcel = catchAsync(
 
 const cancelParcel = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const id = req.params.id;
+    const parcelId = req.params.id;
     const senderId = req.user.userId;
     const { note } = req.body;
 
-    const result = await ParcelService.cancelParcel(senderId, id, note);
+    const result = await ParcelService.cancelParcel(senderId, parcelId, note);
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: "Parcel cancelled successfully",
+      data: result,
+    });
+  }
+);
+
+const deleteParcel = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const parcelId = req.params.id;
+    const senderId = req.user.userId;
+
+    const result = await ParcelService.deleteParcel(senderId, parcelId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Parcel deleted successfully",
       data: result,
     });
   }
@@ -194,6 +211,20 @@ const blockStatusParcel = catchAsync(
   }
 );
 
+const createParcelByAdmin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const adminId = req.user.userId;
+    const parcel = await ParcelService.createParcel(req.body, adminId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Parcel created successfully",
+      data: parcel,
+    });
+  }
+);
+
 const getParcelById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -230,6 +261,7 @@ export const ParcelControllers = {
   // Sender Controllers
   createParcel,
   cancelParcel,
+  deleteParcel,
   getSenderParcels,
 
   // Receiver Controllers
@@ -241,6 +273,7 @@ export const ParcelControllers = {
   getAllParcels,
   updateParcelStatus,
   blockStatusParcel,
+  createParcelByAdmin,
   getParcelById,
 
   // Public Controllers

@@ -31,7 +31,7 @@ const addStatusLog = (
   const statusLogEntry = {
     status,
     location: location || "",
-    note: note || "",
+    note: note || "Updated by System",
     updatedBy: updatedBy,
   };
 
@@ -230,6 +230,29 @@ const cancelParcel = async (senderId: string, id: string, note?: string) => {
   return cleanParcel;
 };
 
+const deleteParcel = async (senderId: string, parcelId: string) => {
+  const parcel = await Parcel.findById(parcelId);
+  if (!parcel) {
+    throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");
+  }
+  // Check if sender owns this parcel
+  if (parcel.sender.toString() !== senderId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to delete this parcel"
+    );
+  }
+
+  // find and delete the parcel
+  if (parcel.currentStatus !== ParcelStatus.CANCELLED) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Parcel must be cancelled before deletion"
+    );
+  }
+  await Parcel.findByIdAndDelete(parcelId);
+};
+
 const getSenderParcels = async (
   senderId: string,
   query: Record<string, string>
@@ -363,7 +386,7 @@ const confirmDelivery = async (parcelId: string, receiverId: string) => {
     ParcelStatus.DELIVERED,
     new Types.ObjectId(receiverId),
     parcel?.deliveryAddress as string,
-    "Parcel delivered by receiver"
+    "Parcel status updated to delivered by receiver"
   );
 
   await parcel.save();
@@ -619,6 +642,147 @@ const blockStatusParcel = async (
   return parcel;
 };
 
+const createParcelByAdmin = async (payload: ICreateParcel, adminId: string) => {
+  const trackingId = generateTrackingId();
+
+  const {
+    weight,
+    senderEmail,
+    receiverEmail,
+    pickupAddress,
+    deliveryAddress,
+    ...rest
+  } = payload;
+
+  // Sender validation
+  const sender = await User.findOne({ email: senderEmail });
+  if (!sender) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Sender account is not found");
+  }
+  if (!sender?.phone) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Please request sender to update their phone number in their profile."
+    );
+  }
+
+  if (sender.role !== Role.SENDER) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is not a sender");
+  }
+
+  if (!sender.isVerified) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Sender is not verified");
+  }
+
+  if (
+    sender.isActive === IsActive.BLOCKED ||
+    sender.isActive === IsActive.INACTIVE
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Sender is ${sender.isActive}.`);
+  }
+  if (sender.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Sender is deleted.`);
+  }
+
+  const senderAddress = pickupAddress || sender.defaultAddress;
+
+  if (!senderAddress) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Pickup address is required or set a default address in your profile."
+    );
+  }
+
+  // Receiver validation
+  const receiver = await User.findOne({ email: receiverEmail });
+  if (!receiver) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Receiver account is not found");
+  }
+
+  if (receiver.role !== Role.RECEIVER) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Provided user is not a receiver"
+    );
+  }
+
+  if (!receiver.isVerified) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Receiver is not verified, you cannot send parcel to this receiver"
+    );
+  }
+
+  if (
+    receiver.isActive === IsActive.BLOCKED ||
+    receiver.isActive === IsActive.INACTIVE
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Receiver is ${receiver.isActive}. You cannot send parcel to this receiver`
+    );
+  }
+  if (receiver.isDeleted) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Receiver is deleted. You cannot send parcel to this receiver`
+    );
+  }
+
+  const receiverAddress = deliveryAddress || receiver.defaultAddress;
+
+  if (!receiverAddress) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Delivery address is required or request receiver to add a default address in their profile."
+    );
+  }
+  const parcelType = rest.type || ParcelType.PACKAGE;
+  const shippingType = rest.shippingType || ShippingType.STANDARD;
+
+  if (rest.couponCode) {
+    await validateCoupon(rest.couponCode);
+  }
+  const calcParcelFeeWithoutDiscount = calculateParcelFee(
+    weight,
+    parcelType,
+    shippingType
+  );
+
+  const finalFee = rest.couponCode
+    ? await applyCoupon(rest.couponCode, calcParcelFeeWithoutDiscount)
+    : calcParcelFeeWithoutDiscount;
+
+  const estimatedDeliveryDate = expectedDeliveryDate(shippingType);
+
+  const parcel = await Parcel.create({
+    trackingId,
+    type: parcelType,
+    shippingType,
+    weight,
+    sender: sender._id,
+    receiver: receiver._id,
+    fee: finalFee,
+    currentStatus: ParcelStatus.REQUESTED,
+    statusLog: [
+      {
+        status: ParcelStatus.REQUESTED,
+        location: senderAddress,
+        note: "Parcel request created by Admin",
+        timestamp: new Date(),
+        updatedBy: new Types.ObjectId(adminId),
+      },
+    ],
+    pickupAddress: senderAddress,
+    deliveryAddress: receiverAddress,
+    estimatedDelivery: estimatedDeliveryDate,
+    couponCode: rest.couponCode,
+    ...rest,
+  });
+
+  return parcel;
+};
+
 const getParcelById = async (parcelId: string) => {
   const parcel = await Parcel.findById(parcelId);
 
@@ -660,6 +824,7 @@ export const ParcelService = {
   // Sender Services
   createParcel,
   cancelParcel,
+  deleteParcel,
   getSenderParcels,
 
   // Receiver Services
@@ -671,6 +836,7 @@ export const ParcelService = {
   getAllParcels,
   updateParcelStatus,
   blockStatusParcel,
+  createParcelByAdmin,
   getParcelById,
 
   // Public Services

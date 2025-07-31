@@ -66,6 +66,7 @@ export interface ICreateParcel {
   shippingType?: ShippingType;
   weight: number;
   couponCode?: string;
+  senderEmail?: boolean;
   receiverEmail: string;
   pickupAddress?: string;
   deliveryAddress?: string;

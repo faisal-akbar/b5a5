@@ -31,6 +31,15 @@ export const createParcelZodSchema = z.object({
     .optional(),
 });
 
+// For admin
+export const createParcelByAdminZodSchema = createParcelZodSchema.extend({
+  senderEmail: z
+    .string({ invalid_type_error: "Email must be string" })
+    .email({ message: "Invalid email address format." })
+    .min(5, { message: "Email must be at least 5 characters long." })
+    .max(100, { message: "Email cannot exceed 100 characters." }),
+});
+
 // StatusLog schema
 const StatusLogSchema = z.object({
   status: z.enum(Object.values(ParcelStatus) as [string]),

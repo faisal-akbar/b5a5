@@ -4,6 +4,7 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { Role } from "../user/user.interface";
 import { ParcelControllers } from "./parcel.controller";
 import {
+  createParcelByAdminZodSchema,
   createParcelZodSchema,
   updateBlockedStatusSchema,
   updateStatusPersonnelSchema,
@@ -24,6 +25,13 @@ router.post(
   checkAuth(Role.SENDER),
   ParcelControllers.cancelParcel
 );
+
+router.post(
+  "/delete/:id",
+  checkAuth(Role.SENDER),
+  ParcelControllers.deleteParcel
+);
+
 router.get("/me", checkAuth(Role.SENDER), ParcelControllers.getSenderParcels);
 
 router.get(
@@ -57,6 +65,13 @@ router.get(
   "/",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   ParcelControllers.getAllParcels
+);
+
+router.post(
+  "/create-parcel-by-admin",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(createParcelByAdminZodSchema),
+  ParcelControllers.createParcelByAdmin
 );
 
 router.patch(
