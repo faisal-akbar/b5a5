@@ -154,7 +154,7 @@ const createParcel = async (payload: ICreateParcel, senderId: string) => {
     ...rest,
   });
 
-  // Fetch the created parcel with excluded fields
+  // Fetch the created parcel with excluded fields for privacy
   const cleanParcel = await Parcel.findById(parcel._id)
     .select("-receiver -statusLog._id -deliveryPersonnel")
     .populate("sender", "name email phone _id")

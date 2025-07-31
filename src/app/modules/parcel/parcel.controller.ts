@@ -1,4 +1,3 @@
-import { Parcel } from "./parcel.model";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
