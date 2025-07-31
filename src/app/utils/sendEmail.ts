@@ -28,35 +28,6 @@ interface SendEmailOptions {
   }[];
 }
 
-// export const sendEmail = async ({
-//   to,
-//   subject,
-//   templateName,
-//   templateData,
-//   attachments,
-// }: SendEmailOptions) => {
-//   try {
-//     const templatePath = path.join(__dirname, `templates/${templateName}.ejs`);
-//     const html = await ejs.renderFile(templatePath, templateData);
-//     const info = await transporter.sendMail({
-//       from: envVars.EMAIL_SENDER.SMTP_FROM,
-//       to: to,
-//       subject: subject,
-//       html: html,
-//       attachments: attachments?.map((attachment) => ({
-//         filename: attachment.filename,
-//         content: attachment.content,
-//         contentType: attachment.contentType,
-//       })),
-//     });
-//     console.log(`\u2709\uFE0F  Email sent to ${to}: ${info.messageId}`);
-//   } catch (error: any) {
-//     console.log("email sending error", error.message);
-//     throw new AppError(401, "Email error");
-//   }
-// };
-
-// for vercel
 export const sendEmail = async ({
   to,
   subject,
@@ -65,52 +36,81 @@ export const sendEmail = async ({
   attachments,
 }: SendEmailOptions) => {
   try {
-    // Verify connection first
-    await new Promise((resolve, reject) => {
-      transporter.verify(function (error, success) {
-        if (error) {
-          console.log("SMTP connection error:", error);
-          reject(error);
-        } else {
-          console.log("✅ SMTP server is ready to take our messages");
-          resolve(success);
-        }
-      });
-    });
-
-    // Render template
     const templatePath = path.join(__dirname, `templates/${templateName}.ejs`);
     const html = await ejs.renderFile(templatePath, templateData);
-
-    // Send email with promise
-    const info = await new Promise((resolve, reject) => {
-      transporter.sendMail(
-        {
-          from: envVars.EMAIL_SENDER.SMTP_FROM,
-          to: to,
-          subject: subject,
-          html: html,
-          attachments: attachments?.map((attachment) => ({
-            filename: attachment.filename,
-            content: attachment.content,
-            contentType: attachment.contentType,
-          })),
-        },
-        (error, info) => {
-          if (error) {
-            console.error("Email sending error:", error);
-            reject(error);
-          } else {
-            console.log(`📧 Email sent to ${to}: ${info.messageId}`);
-            resolve(info);
-          }
-        }
-      );
+    const info = await transporter.sendMail({
+      from: envVars.EMAIL_SENDER.SMTP_FROM,
+      to: to,
+      subject: subject,
+      html: html,
+      attachments: attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: attachment.content,
+        contentType: attachment.contentType,
+      })),
     });
-
-    return info;
+    console.log(`\u2709\uFE0F  Email sent to ${to}: ${info.messageId}`);
   } catch (error: any) {
-    console.log("Email sending error:", error.message);
-    throw new AppError(500, `Email sending failed: ${error.message}`);
+    console.log("email sending error", error.message);
+    throw new AppError(401, "Email error");
   }
 };
+
+// for vercel
+// export const sendEmail = async ({
+//   to,
+//   subject,
+//   templateName,
+//   templateData,
+//   attachments,
+// }: SendEmailOptions) => {
+//   try {
+//     // Verify connection first
+//     await new Promise((resolve, reject) => {
+//       transporter.verify(function (error, success) {
+//         if (error) {
+//           console.log("SMTP connection error:", error);
+//           reject(error);
+//         } else {
+//           console.log("✅ SMTP server is ready to take our messages");
+//           resolve(success);
+//         }
+//       });
+//     });
+
+//     // Render template
+//     const templatePath = path.join(__dirname, `templates/${templateName}.ejs`);
+//     const html = await ejs.renderFile(templatePath, templateData);
+
+//     // Send email with promise
+//     const info = await new Promise((resolve, reject) => {
+//       transporter.sendMail(
+//         {
+//           from: envVars.EMAIL_SENDER.SMTP_FROM,
+//           to: to,
+//           subject: subject,
+//           html: html,
+//           attachments: attachments?.map((attachment) => ({
+//             filename: attachment.filename,
+//             content: attachment.content,
+//             contentType: attachment.contentType,
+//           })),
+//         },
+//         (error, info) => {
+//           if (error) {
+//             console.error("Email sending error:", error);
+//             reject(error);
+//           } else {
+//             console.log(`📧 Email sent to ${to}: ${info.messageId}`);
+//             resolve(info);
+//           }
+//         }
+//       );
+//     });
+
+//     return info;
+//   } catch (error: any) {
+//     console.log("Email sending error:", error.message);
+//     throw new AppError(500, `Email sending failed: ${error.message}`);
+//   }
+// };
