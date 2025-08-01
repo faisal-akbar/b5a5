@@ -412,7 +412,7 @@ const getDeliveryHistory = async (
     Parcel.find({
       receiver: receiverId,
       currentStatus: {
-        $in: [ParcelStatus.DELIVERED, ParcelStatus.PICKED],
+        $in: [ParcelStatus.DELIVERED],
       },
     })
       .select(

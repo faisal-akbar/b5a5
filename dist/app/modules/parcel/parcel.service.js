@@ -206,7 +206,6 @@ const getIncomingParcels = (receiverId, query) => __awaiter(void 0, void 0, void
         currentStatus: {
             $nin: [
                 parcel_interface_1.ParcelStatus.DELIVERED,
-                parcel_interface_1.ParcelStatus.PICKED,
                 parcel_interface_1.ParcelStatus.FLAGGED,
                 parcel_interface_1.ParcelStatus.RETURNED,
                 parcel_interface_1.ParcelStatus.BLOCKED,
@@ -256,7 +255,7 @@ const getDeliveryHistory = (receiverId, query) => __awaiter(void 0, void 0, void
     const parcelQuery = new QueryBuilder_1.QueryBuilder(parcel_model_1.Parcel.find({
         receiver: receiverId,
         currentStatus: {
-            $in: [parcel_interface_1.ParcelStatus.DELIVERED, parcel_interface_1.ParcelStatus.PICKED],
+            $in: [parcel_interface_1.ParcelStatus.DELIVERED],
         },
     })
         .select("-weight -weightUnit -fee -couponCode -isPaid -isBlocked -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel")
