@@ -45,7 +45,7 @@ const updateUser = async (
     decodedToken.role === Role.RECEIVER
   ) {
     if (userId !== decodedToken.userId) {
-      throw new AppError(401, "You are not authorized");
+      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
     }
   }
 
@@ -59,7 +59,7 @@ const updateUser = async (
     decodedToken.role === Role.ADMIN &&
     ifUserExist.role === Role.SUPER_ADMIN
   ) {
-    throw new AppError(401, "You are not authorized");
+    throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
   }
 
   if (payload.role) {

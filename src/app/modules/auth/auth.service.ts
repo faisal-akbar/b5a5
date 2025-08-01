@@ -79,7 +79,7 @@ const changePassword = async (
     user!.password as string
   );
   if (!isOldPasswordMatch) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Old Password does not match");
+    throw new AppError(httpStatus.FORBIDDEN, "Old Password does not match");
   }
 
   user!.password = await bcryptjs.hash(
@@ -95,12 +95,15 @@ const resetPassword = async (
   decodedToken: JwtPayload
 ) => {
   if (payload.id != decodedToken.userId) {
-    throw new AppError(401, "You can not reset your password");
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "You can not reset your password"
+    );
   }
 
   const isUserExist = await User.findById(decodedToken.userId);
   if (!isUserExist) {
-    throw new AppError(401, "User does not exist");
+    throw new AppError(httpStatus.NOT_FOUND, "User does not exist");
   }
 
   const hashedPassword = await bcryptjs.hash(
