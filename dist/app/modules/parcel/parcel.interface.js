@@ -5,14 +5,14 @@ var ParcelStatus;
 (function (ParcelStatus) {
     ParcelStatus["REQUESTED"] = "Requested";
     ParcelStatus["APPROVED"] = "Approved";
+    ParcelStatus["PICKED"] = "Picked";
     ParcelStatus["DISPATCHED"] = "Dispatched";
     ParcelStatus["IN_TRANSIT"] = "In-Transit";
-    ParcelStatus["DELIVERED"] = "Delivered";
     ParcelStatus["RESCHEDULED"] = "Rescheduled";
+    ParcelStatus["DELIVERED"] = "Delivered";
+    ParcelStatus["RETURNED"] = "Returned";
     ParcelStatus["CANCELLED"] = "Cancelled";
     ParcelStatus["BLOCKED"] = "Blocked";
-    ParcelStatus["RETURNED"] = "Returned";
-    ParcelStatus["PICKED"] = "Picked";
     ParcelStatus["FLAGGED"] = "Flagged";
 })(ParcelStatus || (exports.ParcelStatus = ParcelStatus = {}));
 var ParcelType;

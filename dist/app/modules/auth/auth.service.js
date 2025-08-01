@@ -31,9 +31,9 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const env_1 = require("../../config/env");
 const AppError_1 = __importDefault(require("../../utils/errorHelpers/AppError"));
 const userTokens_1 = require("../../utils/jwt/userTokens");
+const sendEmail_1 = require("../../utils/sendEmail");
 const user_interface_1 = require("../user/user.interface");
 const user_model_1 = require("../user/user.model");
-const sendEmail_1 = require("../../utils/sendEmail");
 const credentialsLogin = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = payload;
     const isUserExist = yield user_model_1.User.findOne({ email });
@@ -43,7 +43,8 @@ const credentialsLogin = (payload) => __awaiter(void 0, void 0, void 0, function
     if (!isUserExist.isVerified) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is not verified");
     }
-    if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED || isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
+    if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED ||
+        isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `User is ${isUserExist.isActive}`);
     }
     if (isUserExist.isDeleted) {
@@ -59,13 +60,13 @@ const credentialsLogin = (payload) => __awaiter(void 0, void 0, void 0, function
     return {
         accessToken: userTokens.accessToken,
         refreshToken: userTokens.refreshToken,
-        user: rest
+        user: rest,
     };
 });
 const getNewAccessToken = (refreshToken) => __awaiter(void 0, void 0, void 0, function* () {
     const newAccessToken = yield (0, userTokens_1.createNewAccessTokenWithRefreshToken)(refreshToken);
     return {
-        accessToken: newAccessToken
+        accessToken: newAccessToken,
     };
 });
 const changePassword = (oldPassword, newPassword, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
@@ -97,7 +98,8 @@ const forgotPassword = (email) => __awaiter(void 0, void 0, void 0, function* ()
     if (!isUserExist.isVerified) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is not verified");
     }
-    if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED || isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
+    if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED ||
+        isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `User is ${isUserExist.isActive}`);
     }
     if (isUserExist.isDeleted) {
@@ -106,10 +108,10 @@ const forgotPassword = (email) => __awaiter(void 0, void 0, void 0, function* ()
     const jwtPayload = {
         userId: isUserExist._id,
         email: isUserExist.email,
-        role: isUserExist.role
+        role: isUserExist.role,
     };
     const resetToken = jsonwebtoken_1.default.sign(jwtPayload, env_1.envVars.JWT_ACCESS_SECRET, {
-        expiresIn: "10m"
+        expiresIn: "10m",
     });
     const resetUILink = `${env_1.envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`;
     (0, sendEmail_1.sendEmail)({
@@ -118,8 +120,8 @@ const forgotPassword = (email) => __awaiter(void 0, void 0, void 0, function* ()
         templateName: "forgetPassword",
         templateData: {
             name: isUserExist.name,
-            resetUILink
-        }
+            resetUILink,
+        },
     });
 });
 exports.AuthServices = {

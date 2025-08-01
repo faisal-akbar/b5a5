@@ -3,14 +3,14 @@ import { Types } from "mongoose";
 export enum ParcelStatus {
   REQUESTED = "Requested",
   APPROVED = "Approved",
+  PICKED = "Picked",
   DISPATCHED = "Dispatched",
   IN_TRANSIT = "In-Transit",
-  DELIVERED = "Delivered",
   RESCHEDULED = "Rescheduled",
+  DELIVERED = "Delivered",
+  RETURNED = "Returned",
   CANCELLED = "Cancelled",
   BLOCKED = "Blocked",
-  RETURNED = "Returned",
-  PICKED = "Picked",
   FLAGGED = "Flagged",
 }
 

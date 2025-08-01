@@ -28,6 +28,16 @@ exports.createUserBaseZodSchema = zod_1.default.object({
         .regex(/^(?=.*\d)/, {
         message: "Password must contain at least 1 number.",
     }),
+    phone: zod_1.default
+        .string({ invalid_type_error: "Phone Number must be string" })
+        .regex(/^(?:\+8801\d{9}|01\d{9})$/, {
+        message: "Phone number must be valid for Bangladesh. Format: +8801XXXXXXXXX or 01XXXXXXXXX",
+    })
+        .optional(),
+    defaultAddress: zod_1.default
+        .string({ invalid_type_error: "Address must be string" })
+        .max(200, { message: "Address cannot exceed 200 characters." })
+        .optional(),
 });
 exports.createSenderReceiverZodSchema = exports.createUserBaseZodSchema.extend({
     role: zod_1.default.enum([user_interface_1.Role.SENDER, user_interface_1.Role.RECEIVER]),

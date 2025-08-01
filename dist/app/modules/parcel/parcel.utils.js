@@ -97,7 +97,7 @@ exports.StatusTransitions = {
     ],
     [parcel_interface_1.ParcelStatus.DELIVERED]: [],
     [parcel_interface_1.ParcelStatus.CANCELLED]: [parcel_interface_1.ParcelStatus.REQUESTED], // Can be reopened
-    [parcel_interface_1.ParcelStatus.RETURNED]: [parcel_interface_1.ParcelStatus.APPROVED],
+    [parcel_interface_1.ParcelStatus.RETURNED]: [parcel_interface_1.ParcelStatus.REQUESTED],
     [parcel_interface_1.ParcelStatus.FLAGGED]: [parcel_interface_1.ParcelStatus.BLOCKED, parcel_interface_1.ParcelStatus.CANCELLED],
     [parcel_interface_1.ParcelStatus.BLOCKED]: [parcel_interface_1.ParcelStatus.APPROVED, parcel_interface_1.ParcelStatus.CANCELLED],
 };

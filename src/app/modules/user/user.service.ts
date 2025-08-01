@@ -115,6 +115,9 @@ const getAllUsers = async (query: Record<string, string>) => {
 
 const getSingleUser = async (id: string) => {
   const user = await User.findById(id).select("-password");
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
   return {
     data: user,
   };

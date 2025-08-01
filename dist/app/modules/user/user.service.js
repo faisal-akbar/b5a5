@@ -100,6 +100,9 @@ const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getSingleUser = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(id).select("-password");
+    if (!user) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
+    }
     return {
         data: user,
     };

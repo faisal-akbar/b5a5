@@ -156,7 +156,7 @@ const createParcel = async (payload: ICreateParcel, senderId: string) => {
 
   // Fetch the created parcel with excluded fields for privacy
   const cleanParcel = await Parcel.findById(parcel._id)
-    .select("-receiver -statusLog._id -deliveryPersonnel")
+    .select("-receiver -statusLog._id -deliveryPersonnel -isBlocked")
     .populate("sender", "name email phone _id")
     .populate("receiver", "name email phone -_id")
     .populate("statusLog.updatedBy", "name role -_id");
@@ -187,8 +187,7 @@ const cancelParcel = async (senderId: string, id: string, note?: string) => {
   if (
     parcel.currentStatus === ParcelStatus.DELIVERED ||
     parcel.currentStatus === ParcelStatus.DISPATCHED ||
-    parcel.currentStatus === ParcelStatus.IN_TRANSIT ||
-    parcel.currentStatus === ParcelStatus.PICKED
+    parcel.currentStatus === ParcelStatus.IN_TRANSIT
   ) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
@@ -196,12 +195,14 @@ const cancelParcel = async (senderId: string, id: string, note?: string) => {
     );
   }
 
-  if (parcel.currentStatus === ParcelStatus.BLOCKED) {
-    throw new AppError(httpStatus.FORBIDDEN, "Cannot cancel blocked parcel");
-  }
-
-  if (parcel.currentStatus === ParcelStatus.RETURNED) {
-    throw new AppError(httpStatus.FORBIDDEN, "Cannot cancel returned parcel");
+  if (
+    parcel.currentStatus === ParcelStatus.BLOCKED ||
+    parcel.currentStatus === ParcelStatus.FLAGGED
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Cannot cancel blocked or flagged parcel"
+    );
   }
 
   // Update parcel status and add tracking event
@@ -222,7 +223,7 @@ const cancelParcel = async (senderId: string, id: string, note?: string) => {
 
   // Fetch the created parcel with excluded fields
   const cleanParcel = await Parcel.findById(parcel._id)
-    .select("-receiver -statusLog._id -deliveryPersonnel")
+    .select("-receiver -statusLog._id -deliveryPersonnel -isBlocked")
     .populate("sender", "name email phone _id")
     .populate("receiver", "name email phone -_id")
     .populate("statusLog.updatedBy", "name role -_id");
@@ -243,8 +244,11 @@ const deleteParcel = async (senderId: string, parcelId: string) => {
     );
   }
 
-  // find and delete the parcel
-  if (parcel.currentStatus !== ParcelStatus.CANCELLED) {
+  // find and delete the parcel only if it is cancelled or requested
+  if (
+    parcel.currentStatus !== ParcelStatus.CANCELLED &&
+    parcel.currentStatus !== ParcelStatus.REQUESTED
+  ) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Parcel must be cancelled before deletion"
@@ -259,7 +263,7 @@ const getSenderParcels = async (
 ) => {
   const parcelQuery = new QueryBuilder(
     Parcel.find({ sender: senderId })
-      .select("-receiver -statusLog._id -deliveryPersonnel")
+      .select("-receiver -statusLog._id -deliveryPersonnel -isBlocked")
       .populate("sender", "name email phone _id")
       .populate("receiver", "name email phone -_id")
       .populate("statusLog.updatedBy", "name role -_id"),
@@ -304,7 +308,7 @@ const getParcelWithTrackingHistory = async (
 
   const cleanParcel = await Parcel.findById(parcel._id)
     .select(
-      "-type -weight -weightUnit -shippingType -fee -isPaid -couponCode -receiver -statusLog._id"
+      "-type -weight -weightUnit -shippingType -fee -isPaid -isBlocked -couponCode -receiver -statusLog._id"
     )
     .populate("sender", "name email phone -_id")
     .populate("receiver", "name email phone -_id")
@@ -334,7 +338,7 @@ const getIncomingParcels = async (
       },
     })
       .select(
-        "-weight -weightUnit -fee -couponCode -isPaid -sender -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
+        "-weight -weightUnit -fee -couponCode -isPaid -isBlocked -sender -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
       )
       .populate("sender", "name email phone -_id")
       .populate("receiver", "name email phone _id"),
@@ -394,7 +398,7 @@ const confirmDelivery = async (parcelId: string, receiverId: string) => {
   // Fetch the updated parcel with excluded fields for receiver
   const cleanParcel = await Parcel.findById(parcel._id)
     .select(
-      "-_id -weight -weightUnit -fee -couponCode -isPaid -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
+      "-_id -weight -weightUnit -fee -couponCode -isPaid -isBlocked -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
     )
     .populate("sender", "name email phone -_id");
 
@@ -413,7 +417,7 @@ const getDeliveryHistory = async (
       },
     })
       .select(
-        "-weight -weightUnit -fee -couponCode -isPaid -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
+        "-weight -weightUnit -fee -couponCode -isPaid -isBlocked -sender -receiver -statusLog._id -statusLog.updatedBy -deliveryPersonnel"
       )
       .populate("sender", "name email phone -_id")
       .populate("receiver", "name email phone"),
@@ -475,10 +479,11 @@ const updateParcelStatus = async (
   ) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      "Provide currentStatus, currentLocation or deliveryPersonnelId"
+      "Please provide at least one of currentStatus, currentLocation or deliveryPersonnelId"
     );
   }
 
+  // check the status flow transition
   if (
     payload.currentStatus &&
     !isValidStatusTransition(parcel.currentStatus, payload.currentStatus)
@@ -494,22 +499,87 @@ const updateParcelStatus = async (
   }
 
   // Update parcel status
-  if (payload.currentStatus === ParcelStatus.CANCELLED) {
-    parcel.cancelledAt = new Date();
-  } else {
-    parcel.cancelledAt = null;
-  }
-  if (payload.currentStatus === ParcelStatus.DELIVERED) {
-    parcel.deliveredAt = new Date();
-  } else {
-    parcel.deliveredAt = null;
+  if (payload?.currentStatus) {
+    if (payload.currentStatus === ParcelStatus.CANCELLED) {
+      parcel.currentStatus = ParcelStatus.CANCELLED;
+      parcel.cancelledAt = new Date();
+    } else {
+      parcel.cancelledAt = null;
+    }
+
+    if (payload.currentStatus === ParcelStatus.DELIVERED) {
+      parcel.currentStatus = ParcelStatus.DELIVERED;
+      parcel.deliveredAt = new Date();
+      parcel.cancelledAt = null;
+    } else {
+      parcel.deliveredAt = null;
+    }
+
+    if (payload.currentStatus === ParcelStatus.BLOCKED) {
+      parcel.isBlocked = true;
+      parcel.currentStatus = ParcelStatus.BLOCKED;
+      parcel.cancelledAt = null;
+    }
+
+    if (payload.currentStatus === ParcelStatus.APPROVED) {
+      parcel.isBlocked = false;
+      parcel.currentStatus = ParcelStatus.APPROVED;
+      parcel.cancelledAt = null;
+    }
+    if (payload.currentStatus === ParcelStatus.RETURNED) {
+      parcel.currentStatus = ParcelStatus.RETURNED;
+      parcel.cancelledAt = null;
+    }
+
+    parcel.currentStatus = payload.currentStatus;
+
+    addStatusLog(
+      parcel,
+      (payload.currentStatus || parcel.currentStatus) as ParcelStatus,
+      new Types.ObjectId(adminId),
+      payload?.currentLocation || (parcel?.currentLocation as string) || "",
+      `Status updated by admin to ${parcel.currentStatus}`
+    );
   }
 
-  if (payload.currentStatus === ParcelStatus.BLOCKED) {
-    parcel.isBlocked = true;
+  // Update current location if provided
+  if (payload?.currentLocation) {
+    parcel.currentLocation = payload.currentLocation;
   }
 
   if (payload.deliveryPersonnelId) {
+    const deliveryPersonnelId = new Types.ObjectId(payload.deliveryPersonnelId);
+
+    const deliveryPersonnel = await User.findById(deliveryPersonnelId);
+
+    if (!deliveryPersonnel) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Delivery personnel not found."
+      );
+    }
+    if (deliveryPersonnel.role !== Role.DELIVERY_PERSONNEL) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Provided ID is not a delivery personnel ID"
+      );
+    }
+
+    // Check if personnel is active
+    if (deliveryPersonnel.isActive !== IsActive.ACTIVE) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Delivery personnel is ${deliveryPersonnel.isActive} and cannot be assigned`
+      );
+    }
+
+    if (!deliveryPersonnel.isVerified) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Delivery personnel is not verified and cannot be assigned`
+      );
+    }
+
     // Check if current status allows delivery personnel assignment
     const validStatusesForPersonnelAssignment = [
       ParcelStatus.APPROVED,
@@ -530,60 +600,6 @@ const updateParcelStatus = async (
       );
     }
 
-    const deliveryPersonnelId = new Types.ObjectId(payload.deliveryPersonnelId);
-
-    // Validate delivery personnel exists and has correct role
-    const deliveryPersonnel = await User.findById(deliveryPersonnelId);
-    if (
-      !deliveryPersonnel ||
-      deliveryPersonnel.role !== Role.DELIVERY_PERSONNEL
-    ) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Invalid delivery personnel ID or not a delivery personnel"
-      );
-    }
-
-    // Check if personnel is active and available
-    if (deliveryPersonnel.isActive !== IsActive.ACTIVE) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        `Delivery personnel is ${deliveryPersonnel.isActive} and cannot be assigned`
-      );
-    }
-
-    // Add to delivery personnel array if not already present
-    if (
-      Array.isArray(parcel.deliveryPersonnel) &&
-      !parcel.deliveryPersonnel.includes(deliveryPersonnelId)
-    ) {
-      parcel.deliveryPersonnel.push(deliveryPersonnelId);
-
-      // Add status log for personnel assignment
-      addStatusLog(
-        parcel,
-        finalStatus,
-        new Types.ObjectId(adminId),
-        payload.currentLocation || "",
-        `Delivery personnel ${deliveryPersonnel.name} assigned`
-      );
-    }
-  }
-
-  // Update delivery personnel if provided
-  if (payload.deliveryPersonnelId) {
-    const deliveryPersonnelId = new Types.ObjectId(payload.deliveryPersonnelId);
-
-    const deliveryPersonnel = await User.findById(deliveryPersonnelId);
-    if (
-      !deliveryPersonnel ||
-      deliveryPersonnel.role !== Role.DELIVERY_PERSONNEL
-    ) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Invalid delivery personnel ID or not a delivery personnel"
-      );
-    }
     if (
       Array.isArray(parcel.deliveryPersonnel) &&
       !parcel.deliveryPersonnel.includes(deliveryPersonnelId)

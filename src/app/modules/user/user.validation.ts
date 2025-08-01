@@ -23,6 +23,17 @@ export const createUserBaseZodSchema = z.object({
     .regex(/^(?=.*\d)/, {
       message: "Password must contain at least 1 number.",
     }),
+  phone: z
+    .string({ invalid_type_error: "Phone Number must be string" })
+    .regex(/^(?:\+8801\d{9}|01\d{9})$/, {
+      message:
+        "Phone number must be valid for Bangladesh. Format: +8801XXXXXXXXX or 01XXXXXXXXX",
+    })
+    .optional(),
+  defaultAddress: z
+    .string({ invalid_type_error: "Address must be string" })
+    .max(200, { message: "Address cannot exceed 200 characters." })
+    .optional(),
 });
 
 export const createSenderReceiverZodSchema = createUserBaseZodSchema.extend({

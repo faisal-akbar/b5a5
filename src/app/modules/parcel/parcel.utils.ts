@@ -102,7 +102,7 @@ export const StatusTransitions: Record<ParcelStatus, ParcelStatus[]> = {
   ],
   [ParcelStatus.DELIVERED]: [],
   [ParcelStatus.CANCELLED]: [ParcelStatus.REQUESTED], // Can be reopened
-  [ParcelStatus.RETURNED]: [ParcelStatus.APPROVED],
+  [ParcelStatus.RETURNED]: [ParcelStatus.REQUESTED],
   [ParcelStatus.FLAGGED]: [ParcelStatus.BLOCKED, ParcelStatus.CANCELLED],
   [ParcelStatus.BLOCKED]: [ParcelStatus.APPROVED, ParcelStatus.CANCELLED],
 };
