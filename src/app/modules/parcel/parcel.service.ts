@@ -329,7 +329,6 @@ const getIncomingParcels = async (
       currentStatus: {
         $nin: [
           ParcelStatus.DELIVERED,
-          ParcelStatus.PICKED,
           ParcelStatus.FLAGGED,
           ParcelStatus.RETURNED,
           ParcelStatus.BLOCKED,
