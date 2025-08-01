@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OTPService = void 0;
 const crypto_1 = __importDefault(require("crypto"));
+const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const redis_config_1 = require("../../config/redis.config");
 const AppError_1 = __importDefault(require("../../utils/errorHelpers/AppError"));
 const sendEmail_1 = require("../../utils/sendEmail");
@@ -26,18 +27,18 @@ const generateOtp = (length = 6) => {
 const sendOTP = (email, name) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findOne({ email });
     if (!user) {
-        throw new AppError_1.default(404, "User not found");
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
     }
     if (user.isVerified) {
-        throw new AppError_1.default(401, "You are already verified");
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You are already verified");
     }
     const otp = generateOtp();
     const redisKey = `otp:${email}`;
     yield redis_config_1.redisClient.set(redisKey, otp, {
         expiration: {
             type: "EX",
-            value: OTP_EXPIRATION
-        }
+            value: OTP_EXPIRATION,
+        },
     });
     yield (0, sendEmail_1.sendEmail)({
         to: email,
@@ -45,33 +46,33 @@ const sendOTP = (email, name) => __awaiter(void 0, void 0, void 0, function* () 
         templateName: "otp",
         templateData: {
             name: name,
-            otp: otp
-        }
+            otp: otp,
+        },
     });
 });
 const verifyOTP = (email, otp) => __awaiter(void 0, void 0, void 0, function* () {
     // const user = await User.findOne({ email, isVerified: false })
     const user = yield user_model_1.User.findOne({ email });
     if (!user) {
-        throw new AppError_1.default(404, "User not found");
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
     }
     if (user.isVerified) {
-        throw new AppError_1.default(401, "You are already verified");
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You are already verified");
     }
     const redisKey = `otp:${email}`;
     const savedOtp = yield redis_config_1.redisClient.get(redisKey);
     if (!savedOtp) {
-        throw new AppError_1.default(401, "Invalid OTP");
+        throw new AppError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Invalid OTP");
     }
     if (savedOtp !== otp) {
-        throw new AppError_1.default(401, "Invalid OTP");
+        throw new AppError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Invalid OTP");
     }
     yield Promise.all([
         user_model_1.User.updateOne({ email }, { isVerified: true }, { runValidators: true }),
-        redis_config_1.redisClient.del([redisKey])
+        redis_config_1.redisClient.del([redisKey]),
     ]);
 });
 exports.OTPService = {
     sendOTP,
-    verifyOTP
+    verifyOTP,
 };

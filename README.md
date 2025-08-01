@@ -164,7 +164,7 @@ npm run dev
 
 | Role                 | Responsibilities                                          |
 | -------------------- | --------------------------------------------------------- |
-| `SENDER`             | Register, send/cancel/delete parcels, view own parcels    |
+| `SENDER`             | send/cancel/delete parcels, view own parcels, status      |
 | `RECEIVER`           | View incoming parcels, confirm delivery, delivery history |
 | `DELIVERY_PERSONNEL` | Currently admin can assign to parcel, and create          |
 | `ADMIN`              | Manage users, create admins and personnel, manage coupons |

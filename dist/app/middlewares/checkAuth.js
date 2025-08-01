@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkAuth = void 0;
+const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const env_1 = require("../config/env");
+const user_interface_1 = require("../modules/user/user.interface");
+const user_model_1 = require("../modules/user/user.model");
 const AppError_1 = __importDefault(require("../utils/errorHelpers/AppError"));
 const jwt_1 = require("../utils/jwt/jwt");
-const user_model_1 = require("../modules/user/user.model");
-const http_status_codes_1 = __importDefault(require("http-status-codes"));
-const user_interface_1 = require("../modules/user/user.interface");
 const checkAuth = (...authRoles) => (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const accessToken = req.headers.authorization;
@@ -33,14 +33,15 @@ const checkAuth = (...authRoles) => (req, res, next) => __awaiter(void 0, void 0
         if (!isUserExist.isVerified) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is not verified");
         }
-        if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED || isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
+        if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED ||
+            isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `User is ${isUserExist.isActive}`);
         }
         if (isUserExist.isDeleted) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is deleted");
         }
         if (!authRoles.includes(verifiedToken.role)) {
-            throw new AppError_1.default(403, "You are not permitted to view this route!!!");
+            throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not permitted to view this route!!!");
         }
         req.user = verifiedToken;
         next();

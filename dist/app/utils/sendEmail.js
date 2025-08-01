@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmail = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const ejs_1 = __importDefault(require("ejs"));
+const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const path_1 = __importDefault(require("path"));
 const env_1 = require("../config/env");
@@ -48,7 +49,7 @@ const sendEmail = (_a) => __awaiter(void 0, [_a], void 0, function* ({ to, subje
     }
     catch (error) {
         console.log("email sending error", error.message);
-        throw new AppError_1.default(401, "Email error");
+        throw new AppError_1.default(http_status_codes_1.default.INTERNAL_SERVER_ERROR, "Email sending error");
     }
 });
 exports.sendEmail = sendEmail;

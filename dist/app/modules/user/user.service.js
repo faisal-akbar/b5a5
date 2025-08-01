@@ -49,7 +49,7 @@ const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, 
     if (decodedToken.role === user_interface_1.Role.SENDER ||
         decodedToken.role === user_interface_1.Role.RECEIVER) {
         if (userId !== decodedToken.userId) {
-            throw new AppError_1.default(401, "You are not authorized");
+            throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not authorized");
         }
     }
     const ifUserExist = yield user_model_1.User.findById(userId);
@@ -58,7 +58,7 @@ const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, 
     }
     if (decodedToken.role === user_interface_1.Role.ADMIN &&
         ifUserExist.role === user_interface_1.Role.SUPER_ADMIN) {
-        throw new AppError_1.default(401, "You are not authorized");
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not authorized");
     }
     if (payload.role) {
         if (decodedToken.role === user_interface_1.Role.SENDER ||

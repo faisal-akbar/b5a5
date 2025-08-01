@@ -73,18 +73,18 @@ const changePassword = (oldPassword, newPassword, decodedToken) => __awaiter(voi
     const user = yield user_model_1.User.findById(decodedToken.userId);
     const isOldPasswordMatch = yield bcryptjs_1.default.compare(oldPassword, user.password);
     if (!isOldPasswordMatch) {
-        throw new AppError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Old Password does not match");
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Old Password does not match");
     }
     user.password = yield bcryptjs_1.default.hash(newPassword, Number(env_1.envVars.BCRYPT_SALT_ROUND));
     user.save();
 });
 const resetPassword = (payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
     if (payload.id != decodedToken.userId) {
-        throw new AppError_1.default(401, "You can not reset your password");
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You can not reset your password");
     }
     const isUserExist = yield user_model_1.User.findById(decodedToken.userId);
     if (!isUserExist) {
-        throw new AppError_1.default(401, "User does not exist");
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User does not exist");
     }
     const hashedPassword = yield bcryptjs_1.default.hash(payload.newPassword, Number(env_1.envVars.BCRYPT_SALT_ROUND));
     isUserExist.password = hashedPassword;
