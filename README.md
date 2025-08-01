@@ -14,7 +14,7 @@ Live Demo: [Parcel Delivery System](https://b5a5.vercel.app/)
 - 🔄 Status Tracking: Track status changes for each parcel.
 - 📲 OTP-based registration verification support
 - 🧱 Scalable Modular Architecture
-- 🎟️ Coupon support (admin-only)
+- 🎟️ Coupon support (only admin/super admin can create)
 - ⚠️ Global error and validation handling
 - 📧 Email notifications for OTP and password reset
 
