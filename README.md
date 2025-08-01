@@ -5,6 +5,8 @@ A modular and secure backend system for managing parcel deliveries. It features 
 ---
 
 Live Demo: [Parcel Delivery System](https://b5a5.vercel.app/)
+Postman Collection: [Parcel Delivery System Postman Collection](https://github.com/faisal-akbar/b5a5/blob/main/Parcel%20Delivery.postman_collection.json)
+Postman Documentation: [Parcel Delivery System Postman Documentation](https://documenter.getpostman.com/view/12876263/2sB3BAKs9y#e6907c46-bf55-44f7-aa40-e23771f6665a)
 
 ## 🧱 Features
 
