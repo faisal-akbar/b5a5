@@ -53,6 +53,30 @@ npm install
 cp .env.example .env
 
 # 4. Update .env with your MongoDB URI, nodemailer credentials, redis credentials, etc.
+PORT=5000
+DB_URL=mongodb+srv://<db_user>:<db_password>@cluster0.4pnfxkm.mongodb.net/percel_delivery_system?retryWrites=true&w=majority&appName=Cluster0
+NODE_ENV=development
+
+# JWT
+JWT_ACCESS_SECRET=access_secret
+JWT_ACCESS_EXPIRES=3d
+
+JWT_REFRESH_SECRET=refresh_secret
+JWT_REFRESH_EXPIRES=10d
+
+# BCRYPT
+BCRYPT_SALT_ROUND=10
+
+# SUPER ADMIN
+SUPER_ADMIN_EMAIL=super@gmail.com
+SUPER_ADMIN_PASSWORD=12345678
+
+# Express Session
+EXPRESS_SESSION_SECRET=express-session
+
+# Frontend URL
+FRONTEND_URL=http://localhost:5173
+
 # SMTP GMAIL
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
