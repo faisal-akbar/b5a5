@@ -9,7 +9,8 @@ exports.otpSendZodSchema = zod_1.default.object({
     name: zod_1.default
         .string({ invalid_type_error: "Name must be string" })
         .min(2, { message: "Name must be at least 2 characters long." })
-        .max(50, { message: "Name cannot exceed 50 characters." }),
+        .max(50, { message: "Name cannot exceed 50 characters." })
+        .optional(),
     email: zod_1.default
         .string({ invalid_type_error: "Email must be string" })
         .email({ message: "Invalid email address format." })

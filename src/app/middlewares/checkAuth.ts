@@ -25,7 +25,7 @@ export const checkAuth =
       const isUserExist = await User.findOne({ email: verifiedToken.email });
 
       if (!isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+        throw new AppError(httpStatus.NOT_FOUND, "User does not exist");
       }
 
       if (!isUserExist.isVerified) {

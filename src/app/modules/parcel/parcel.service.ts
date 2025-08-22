@@ -812,7 +812,7 @@ const getParcelById = async (parcelId: string) => {
 
 const getParcelByTrackingId = async (trackingId: string) => {
   const parcel = await Parcel.findOne({ trackingId }).select(
-    "trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.updatedAt pickupAddress deliveryAddress deliveredAt"
+    "trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.note statusLog.updatedAt pickupAddress deliveryAddress deliveredAt"
   );
 
   if (!parcel) {

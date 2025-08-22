@@ -18,7 +18,7 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
   const isUserExist = await User.findOne({ email });
 
   if (!isUserExist) {
-    throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+    throw new AppError(httpStatus.NOT_FOUND, "User does not exist");
   }
 
   if (!isUserExist.isVerified) {

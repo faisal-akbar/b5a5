@@ -478,7 +478,7 @@ const getParcelById = (parcelId) => __awaiter(void 0, void 0, void 0, function* 
 });
 // ==================== PUBLIC SERVICES ====================
 const getParcelByTrackingId = (trackingId) => __awaiter(void 0, void 0, void 0, function* () {
-    const parcel = yield parcel_model_1.Parcel.findOne({ trackingId }).select("trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.updatedAt pickupAddress deliveryAddress deliveredAt");
+    const parcel = yield parcel_model_1.Parcel.findOne({ trackingId }).select("trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.note statusLog.updatedAt pickupAddress deliveryAddress deliveredAt");
     if (!parcel) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Parcel not found with this tracking ID");
     }

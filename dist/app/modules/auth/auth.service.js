@@ -38,7 +38,7 @@ const credentialsLogin = (payload) => __awaiter(void 0, void 0, void 0, function
     const { email, password } = payload;
     const isUserExist = yield user_model_1.User.findOne({ email });
     if (!isUserExist) {
-        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User does not exist");
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User does not exist");
     }
     if (!isUserExist.isVerified) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is not verified");

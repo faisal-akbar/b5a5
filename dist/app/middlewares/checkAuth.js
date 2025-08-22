@@ -28,7 +28,7 @@ const checkAuth = (...authRoles) => (req, res, next) => __awaiter(void 0, void 0
         const verifiedToken = (0, jwt_1.verifyToken)(accessToken, env_1.envVars.JWT_ACCESS_SECRET);
         const isUserExist = yield user_model_1.User.findOne({ email: verifiedToken.email });
         if (!isUserExist) {
-            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User does not exist");
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User does not exist");
         }
         if (!isUserExist.isVerified) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is not verified");
