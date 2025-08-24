@@ -10,7 +10,6 @@ import { ParcelService } from "./parcel.service";
 
 const createParcel = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Creating parcel delivery request" + req.user);
     const senderId = (req.user as JwtPayload).userId;
     const parcel = await ParcelService.createParcel(req.body, senderId);
 
@@ -27,7 +26,7 @@ const cancelParcel = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const parcelId = req.params.id;
     const senderId = req.user.userId;
-    const { note } = req.body;
+    const { note } = req.body || {};
 
     const result = await ParcelService.cancelParcel(senderId, parcelId, note);
 

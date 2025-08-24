@@ -811,9 +811,11 @@ const getParcelById = async (parcelId: string) => {
 // ==================== PUBLIC SERVICES ====================
 
 const getParcelByTrackingId = async (trackingId: string) => {
-  const parcel = await Parcel.findOne({ trackingId }).select(
-    "trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.note statusLog.updatedAt pickupAddress deliveryAddress deliveredAt"
-  );
+  const parcel = await Parcel.findOne({ trackingId })
+    .select(
+      "trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.note statusLog.updatedBy statusLog.updatedAt pickupAddress deliveryAddress deliveredAt"
+    )
+    .populate("statusLog.updatedBy", "name role -_id");
 
   if (!parcel) {
     throw new AppError(

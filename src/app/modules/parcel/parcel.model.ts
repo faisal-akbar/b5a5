@@ -63,7 +63,7 @@ const parcelSchema = new Schema<IParcel>(
     },
     fee: {
       type: Number,
-      min: 120, // 120 BDT / kg
+      min: 110,
       default: 120,
       required: true,
     },

@@ -96,16 +96,14 @@ const updateUser = async (
 const getAllUsers = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(User.find(), query);
   const usersData = queryBuilder
-    .filter()
     .search(userSearchableFields)
+    .filter()
     .sort()
-    .fields()
-    .paginate();
+    .paginate()
+    .fields();
 
-  const [data, meta] = await Promise.all([
-    usersData.build(),
-    queryBuilder.getMeta(),
-  ]);
+  const data = await usersData.modelQuery;
+  const meta = await queryBuilder.getMeta();
 
   return {
     data,

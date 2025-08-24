@@ -117,6 +117,8 @@ const blockStatusUser = catchAsync(
     const userId = req.params.id;
     const { isActive } = req.body;
 
+    console.log(userId, req.body);
+
     const result = await UserServices.blockStatusUser(userId, isActive);
 
     sendResponse(res, {
