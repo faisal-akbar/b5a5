@@ -440,7 +440,14 @@ const getDeliveryHistory = async (
 // ==================== ADMIN SERVICES ====================
 
 const getAllParcels = async (query: Record<string, string>) => {
-  const parcelQuery = new QueryBuilder(Parcel.find(), query)
+  const parcelQuery = new QueryBuilder(
+    Parcel.find()
+      .populate("sender", "name email phone _id")
+      .populate("receiver", "name email phone -_id")
+      .populate("statusLog.updatedBy", "name role _id")
+      .populate("deliveryPersonnel", "name email phone _id"),
+    query
+  )
     .search(["trackingId", "name", "deliveryAddress", "pickupAddress"])
     .filter()
     .sort()
@@ -671,6 +678,7 @@ const createParcelByAdmin = async (payload: ICreateParcel, adminId: string) => {
 
   // Sender validation
   const sender = await User.findOne({ email: senderEmail });
+
   if (!sender) {
     throw new AppError(httpStatus.BAD_REQUEST, "Sender account is not found");
   }

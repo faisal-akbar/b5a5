@@ -212,7 +212,7 @@ const blockStatusParcel = catchAsync(
 const createParcelByAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const adminId = req.user.userId;
-    const parcel = await ParcelService.createParcel(req.body, adminId);
+    const parcel = await ParcelService.createParcelByAdmin(req.body, adminId);
 
     sendResponse(res, {
       success: true,
