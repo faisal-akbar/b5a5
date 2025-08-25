@@ -4,6 +4,7 @@ import { AnyZodObject } from "zod";
 export const validateRequest =
   (zodSchema: AnyZodObject) =>
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Validating request body:", req.body);
     try {
       // if we are using form data, it will be in req.body.data
       if (req.body.data) {

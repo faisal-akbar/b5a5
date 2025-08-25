@@ -3,6 +3,7 @@ import { AuthRoutes } from "../modules/auth/auth.routes";
 import { CouponRoutes } from "../modules/coupon/coupon.routes";
 import { OtpRoutes } from "../modules/otp/otp.routes";
 import { ParcelRoutes } from "../modules/parcel/parcel.routes";
+import { StatsRoutes } from "../modules/stats/stats.routes";
 import { UserRoutes } from "../modules/user/user.routes";
 
 export const router = Router();
@@ -23,6 +24,10 @@ const moduleRoutes = [
   {
     path: "/parcels",
     route: ParcelRoutes,
+  },
+  {
+    path: "/stats",
+    route: StatsRoutes,
   },
   {
     path: "/coupon",

@@ -8,17 +8,12 @@ const router = express.Router();
 router.get(
   "/parcels",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-  StatsController.getParcelStats
+  StatsController.getParcelsStats
 );
 router.get(
   "/user",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   StatsController.getUserStats
-);
-router.get(
-  "/tour",
-  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-  StatsController.getTourStats
 );
 
 export const StatsRoutes = router;
