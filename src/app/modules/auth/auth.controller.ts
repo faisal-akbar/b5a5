@@ -2,7 +2,6 @@
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
-import { envVars } from "../../config/env";
 import { catchAsync } from "../../utils/catchAsync";
 import AppError from "../../utils/errorHelpers/AppError";
 import { setAuthCookie } from "../../utils/jwt/setCookie";
@@ -50,15 +49,15 @@ const logout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "none",
-      domain: envVars.FRONTEND_URL,
+      //   domain: envVars.FRONTEND_URL,
     });
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "none",
-      domain: envVars.FRONTEND_URL,
+      //   domain: envVars.FRONTEND_URL,
     });
 
     sendResponse(res, {

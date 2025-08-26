@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthControllers = void 0;
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
-const env_1 = require("../../config/env");
 const catchAsync_1 = require("../../utils/catchAsync");
 const AppError_1 = __importDefault(require("../../utils/errorHelpers/AppError"));
 const setCookie_1 = require("../../utils/jwt/setCookie");
@@ -47,15 +46,15 @@ const getNewAccessToken = (0, catchAsync_1.catchAsync)((req, res, next) => __awa
 const logout = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     res.clearCookie("accessToken", {
         httpOnly: true,
-        secure: false,
+        secure: true,
         sameSite: "none",
-        domain: env_1.envVars.FRONTEND_URL,
+        //   domain: envVars.FRONTEND_URL,
     });
     res.clearCookie("refreshToken", {
         httpOnly: true,
-        secure: false,
+        secure: true,
         sameSite: "none",
-        domain: env_1.envVars.FRONTEND_URL,
+        //   domain: envVars.FRONTEND_URL,
     });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
