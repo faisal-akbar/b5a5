@@ -6,9 +6,18 @@ import { User } from "../modules/user/user.model";
 const dummyUsers = [
   // Senders
   {
+    name: "John Doe",
+    role: Role.SENDER,
+    email: "john.sender@parcel.com",
+    password: "sender123",
+    phone: "01733333333",
+    defaultAddress: "789 Park Ave",
+    isVerified: true,
+  },
+  {
     name: "Walter White",
     role: Role.SENDER,
-    email: "walter.white@parcel.com",
+    email: "walter.sender@parcel.com",
     password: "sender123",
     phone: "01711111111",
     defaultAddress: "123 Sender st",
@@ -24,18 +33,9 @@ const dummyUsers = [
     isVerified: true,
   },
   {
-    name: "John Doe",
-    role: Role.SENDER,
-    email: "john.doe@parcel.com",
-    password: "sender123",
-    phone: "01733333333",
-    defaultAddress: "789 Park Ave",
-    isVerified: true,
-  },
-  {
     name: "Jane Smith",
     role: Role.SENDER,
-    email: "jane.smith@parcel.com",
+    email: "jane.sender@parcel.com",
     password: "sender123",
     phone: "01744444444",
     defaultAddress: "321 Sender st",
@@ -44,9 +44,9 @@ const dummyUsers = [
 
   // Receivers
   {
-    name: "Dexter Morgan",
+    name: "Bob Smith",
     role: Role.RECEIVER,
-    email: "dexter.receiver@parcel.com",
+    email: "bob.receiver@parcel.com",
     password: "receiver123",
     phone: "01733333333",
     defaultAddress: "789 Park Ave",

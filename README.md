@@ -97,24 +97,26 @@ npm run dev
 ---
 
 ## 👤 Dummy Users for Testing
-I have added two function to create dummy users, one for super admin `seedSuperAdmin()` (enabled by default) and one for sender, receiver and admin. Uncomment this line  `seedDummyUsers()` in `src/server.ts` if you want to seed dummy users.
+
+I have added two function to create dummy users, one for super admin `seedSuperAdmin()` (enabled by default) and one for sender, receiver and admin. Uncomment this line `seedDummyUsers()` in `src/server.ts` if you want to seed dummy users.
 
 ### Email and password for some dummy users:
+
 ```
 // SUPER_ADMIN
 email: "super@gmail.com",
 password: "12345678"
 
 // ADMIN
-email: "admin@example.com",
+email: "admin@parcel.com",
 password: "admin123"
 
 // SENDER
-email: "john.sender@example.com",
+email: "john.sender@parcel.com",
 password: "sender123"
 
 // RECEIVER
-email: "bob.receiver@example.com",
+email: "bob.receiver@parcel.com",
  password: "receiver123",
 ```
 
@@ -277,6 +279,13 @@ email: "bob.receiver@example.com",
 | PATCH  | `/:id/delivery-status`  | `ADMIN`    | Update delivery status |
 | PATCH  | `/:id/block-status`     | `ADMIN`    | Block/unblock a parcel |
 | GET    | `/:id/details`          | `ADMIN`    | Get parcel details     |
+
+### 📦 stats
+
+| Method | Endpoint   | Role    | Description       |
+| ------ | ---------- | ------- | ----------------- |
+| GET    | `/parcels` | `ADMIN` | Parcel statistics |
+| GET    | `/user`    | `ADMIN` | User statistics   |
 
 ---
 
