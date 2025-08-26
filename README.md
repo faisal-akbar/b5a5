@@ -109,7 +109,7 @@ password: "12345678"
 
 // ADMIN
 email: "admin@parcel.com",
-password: "admin123"
+password: "Ph@12345678"
 
 // SENDER
 email: "john.sender@parcel.com",
