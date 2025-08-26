@@ -19,7 +19,6 @@ const sendResponse_1 = require("../../utils/sendResponse");
 const parcel_service_1 = require("./parcel.service");
 // ==================== SENDER CONTROLLERS ====================
 const createParcel = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Creating parcel delivery request" + req.user);
     const senderId = req.user.userId;
     const parcel = yield parcel_service_1.ParcelService.createParcel(req.body, senderId);
     (0, sendResponse_1.sendResponse)(res, {
@@ -32,7 +31,7 @@ const createParcel = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(
 const cancelParcel = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const parcelId = req.params.id;
     const senderId = req.user.userId;
-    const { note } = req.body;
+    const { note } = req.body || {};
     const result = yield parcel_service_1.ParcelService.cancelParcel(senderId, parcelId, note);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
@@ -151,7 +150,7 @@ const blockStatusParcel = (0, catchAsync_1.catchAsync)((req, res, next) => __awa
 }));
 const createParcelByAdmin = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const adminId = req.user.userId;
-    const parcel = yield parcel_service_1.ParcelService.createParcel(req.body, adminId);
+    const parcel = yield parcel_service_1.ParcelService.createParcelByAdmin(req.body, adminId);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.CREATED,

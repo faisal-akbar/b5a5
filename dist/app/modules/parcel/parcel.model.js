@@ -54,7 +54,7 @@ const parcelSchema = new mongoose_1.Schema({
     },
     fee: {
         type: Number,
-        min: 120, // 120 BDT / kg
+        min: 110,
         default: 120,
         required: true,
     },

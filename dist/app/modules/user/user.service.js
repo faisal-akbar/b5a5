@@ -84,15 +84,13 @@ const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, 
 const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const queryBuilder = new QueryBuilder_1.QueryBuilder(user_model_1.User.find(), query);
     const usersData = queryBuilder
-        .filter()
         .search(user_contants_1.userSearchableFields)
+        .filter()
         .sort()
-        .fields()
-        .paginate();
-    const [data, meta] = yield Promise.all([
-        usersData.build(),
-        queryBuilder.getMeta(),
-    ]);
+        .paginate()
+        .fields();
+    const data = yield usersData.modelQuery;
+    const meta = yield queryBuilder.getMeta();
     return {
         data,
         meta,

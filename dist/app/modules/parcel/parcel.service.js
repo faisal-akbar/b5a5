@@ -275,7 +275,11 @@ const getDeliveryHistory = (receiverId, query) => __awaiter(void 0, void 0, void
 });
 // ==================== ADMIN SERVICES ====================
 const getAllParcels = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const parcelQuery = new QueryBuilder_1.QueryBuilder(parcel_model_1.Parcel.find(), query)
+    const parcelQuery = new QueryBuilder_1.QueryBuilder(parcel_model_1.Parcel.find()
+        .populate("sender", "name email phone _id")
+        .populate("receiver", "name email phone _id")
+        .populate("statusLog.updatedBy", "name role _id")
+        .populate("deliveryPersonnel", "name email phone _id"), query)
         .search(["trackingId", "name", "deliveryAddress", "pickupAddress"])
         .filter()
         .sort()
@@ -470,7 +474,11 @@ const createParcelByAdmin = (payload, adminId) => __awaiter(void 0, void 0, void
     return parcel;
 });
 const getParcelById = (parcelId) => __awaiter(void 0, void 0, void 0, function* () {
-    const parcel = yield parcel_model_1.Parcel.findById(parcelId);
+    const parcel = yield parcel_model_1.Parcel.findById(parcelId)
+        .populate("sender", "name email phone _id")
+        .populate("receiver", "name email phone _id")
+        .populate("statusLog.updatedBy", "name role _id")
+        .populate("deliveryPersonnel", "name email phone _id");
     if (!parcel) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Parcel not found");
     }
@@ -478,7 +486,9 @@ const getParcelById = (parcelId) => __awaiter(void 0, void 0, void 0, function* 
 });
 // ==================== PUBLIC SERVICES ====================
 const getParcelByTrackingId = (trackingId) => __awaiter(void 0, void 0, void 0, function* () {
-    const parcel = yield parcel_model_1.Parcel.findOne({ trackingId }).select("trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.note statusLog.updatedAt pickupAddress deliveryAddress deliveredAt");
+    const parcel = yield parcel_model_1.Parcel.findOne({ trackingId })
+        .select("trackingId currentStatus estimatedDelivery statusLog.status statusLog.location statusLog.note statusLog.updatedBy statusLog.updatedAt pickupAddress deliveryAddress deliveredAt")
+        .populate("statusLog.updatedBy", "name role -_id");
     if (!parcel) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Parcel not found with this tracking ID");
     }

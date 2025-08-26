@@ -93,6 +93,7 @@ const createDeliveryPersonnel = (0, catchAsync_1.catchAsync)((req, res, next) =>
 const blockStatusUser = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
     const { isActive } = req.body;
+    console.log(userId, req.body);
     const result = yield user_service_1.UserServices.blockStatusUser(userId, isActive);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,

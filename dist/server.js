@@ -34,7 +34,7 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, redis_config_1.connectRedis)();
     yield startServer();
     yield (0, seedSuperAdmin_1.seedSuperAdmin)();
-    //   await seedDummyUsers(); // enable this only if you want to seed dummy users
+    // await seedDummyUsers(); // enable this only if you want to seed dummy users
 }))();
 process.on("SIGTERM", () => {
     console.log("SIGTERM signal received... Server shutting down..");

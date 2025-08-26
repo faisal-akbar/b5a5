@@ -6,6 +6,7 @@ const auth_routes_1 = require("../modules/auth/auth.routes");
 const coupon_routes_1 = require("../modules/coupon/coupon.routes");
 const otp_routes_1 = require("../modules/otp/otp.routes");
 const parcel_routes_1 = require("../modules/parcel/parcel.routes");
+const stats_routes_1 = require("../modules/stats/stats.routes");
 const user_routes_1 = require("../modules/user/user.routes");
 exports.router = (0, express_1.Router)();
 const moduleRoutes = [
@@ -24,6 +25,10 @@ const moduleRoutes = [
     {
         path: "/parcels",
         route: parcel_routes_1.ParcelRoutes,
+    },
+    {
+        path: "/stats",
+        route: stats_routes_1.StatsRoutes,
     },
     {
         path: "/coupon",

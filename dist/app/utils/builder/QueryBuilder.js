@@ -28,7 +28,9 @@ class QueryBuilder {
     search(searchableField) {
         const searchTerm = this.query.searchTerm || "";
         const searchQuery = {
-            $or: searchableField.map(field => ({ [field]: { $regex: searchTerm, $options: "i" } }))
+            $or: searchableField.map((field) => ({
+                [field]: { $regex: searchTerm, $options: "i" },
+            })),
         };
         this.modelQuery = this.modelQuery.find(searchQuery);
         return this;
@@ -56,7 +58,8 @@ class QueryBuilder {
     }
     getMeta() {
         return __awaiter(this, void 0, void 0, function* () {
-            const totalDocuments = yield this.modelQuery.model.countDocuments();
+            const totalQueries = this.modelQuery.getFilter();
+            const totalDocuments = yield this.modelQuery.model.countDocuments(totalQueries);
             const page = Number(this.query.page) || 1;
             const limit = Number(this.query.limit) || 10;
             const totalPage = Math.ceil(totalDocuments / limit);

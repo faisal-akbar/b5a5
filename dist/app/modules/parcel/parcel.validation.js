@@ -23,12 +23,10 @@ exports.createParcelZodSchema = zod_1.z.object({
         .max(100, { message: "Email cannot exceed 100 characters." }),
     pickupAddress: zod_1.z
         .string({ invalid_type_error: "Pickup address must be string" })
-        .min(5, { message: "Pickup address must be at least 5 characters long." })
         .max(100, { message: "Pickup address cannot exceed 100 characters." })
         .optional(),
     deliveryAddress: zod_1.z
         .string({ invalid_type_error: "Delivery address must be string" })
-        .min(5, { message: "Delivery address must be at least 5 characters long." })
         .max(100, { message: "Delivery address cannot exceed 100 characters." })
         .optional(),
 });
