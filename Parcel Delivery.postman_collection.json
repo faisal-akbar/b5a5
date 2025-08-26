@@ -897,6 +897,137 @@
 							"body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"User Blocked Successfully\",\n    \"data\": {\n        \"_id\": \"688b96c1ba1b227ddf0ed194\",\n        \"name\": \"Sarah Wilson\",\n        \"email\": \"sarah.receiver@example.com\",\n        \"password\": \"$2b$10$oDvoLDKE0gGjL3x28XeiOuAlDaXJYDrcR0XrYMIIvZ.LIUlII0GaW\",\n        \"phone\": \"01744444444\",\n        \"defaultAddress\": \"321 Customer Lane, Rajshahi\",\n        \"role\": \"RECEIVER\",\n        \"isActive\": \"BLOCKED\",\n        \"isVerified\": true,\n        \"isDeleted\": false,\n        \"createdAt\": \"2025-07-31T16:16:01.762Z\",\n        \"updatedAt\": \"2025-08-01T04:52:29.694Z\"\n    }\n}"
 						}
 					]
+				},
+				{
+					"name": "Get Parcels Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODhiOTZjMmJhMWIyMjdkZGYwZWQxYTMiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzU2MDg1MjE5LCJleHAiOjE3NTYzNDQ0MTl9.oChlYqeuyIChnm14mmqmJVMgiUDHuyhBM8-i_jUq1NQ",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5000/api/v1/stats/parcels",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"v1",
+								"stats",
+								"parcels"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODhiOTZjMmJhMWIyMjdkZGYwZWQxYTMiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzU2MDg1MjE5LCJleHAiOjE3NTYzNDQ0MTl9.oChlYqeuyIChnm14mmqmJVMgiUDHuyhBM8-i_jUq1NQ",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5000/api/v1/stats/user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"v1",
+								"stats",
+								"user"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get User Stats",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODhiOTZjMmJhMWIyMjdkZGYwZWQxYTMiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzU2MDg1MjE5LCJleHAiOjE3NTYzNDQ0MTl9.oChlYqeuyIChnm14mmqmJVMgiUDHuyhBM8-i_jUq1NQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5000/api/v1/stats/user",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"api",
+										"v1",
+										"stats",
+										"user"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "388"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"184-pLlUxFQQxkEPVtvD4b2HV40mQOI\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 25 Aug 2025 04:14:23 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"User stats fetched successfully\",\n    \"data\": {\n        \"totalUsers\": 13,\n        \"totalActiveUsers\": 12,\n        \"totalInActiveUsers\": 0,\n        \"totalBlockedUsers\": 1,\n        \"newUsersInLast7Days\": 1,\n        \"newUsersInLast30Days\": 13,\n        \"usersByRole\": [\n            {\n                \"_id\": \"ADMIN\",\n                \"count\": 2\n            },\n            {\n                \"_id\": \"SENDER\",\n                \"count\": 3\n            },\n            {\n                \"_id\": \"SUPER_ADMIN\",\n                \"count\": 1\n            },\n            {\n                \"_id\": \"DELIVERY_PERSONNEL\",\n                \"count\": 3\n            },\n            {\n                \"_id\": \"RECEIVER\",\n                \"count\": 4\n            }\n        ]\n    }\n}"
+						}
+					]
 				}
 			]
 		},
