@@ -26,7 +26,7 @@ const startServer = async () => {
   await connectRedis();
   await startServer();
   await seedSuperAdmin();
-  //   await seedDummyUsers(); // enable this only if you want to seed dummy users
+  // await seedDummyUsers(); // enable this only if you want to seed dummy users
 })();
 
 process.on("SIGTERM", () => {

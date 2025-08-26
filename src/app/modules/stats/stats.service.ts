@@ -5,6 +5,7 @@ import { User } from "../user/user.model";
 
 const now = new Date();
 const sevenDaysAgo = new Date(now).setDate(now.getDate() - 7);
+const fourteenDaysAgo = new Date(now).setDate(now.getDate() - 14);
 const thirtyDaysAgo = new Date(now).setDate(now.getDate() - 30);
 
 const getUserStats = async () => {
@@ -104,7 +105,7 @@ const getParcelsStats = async () => {
     {
       $group: {
         _id: null,
-        avgFee: { $avg: "$amount" },
+        avgFee: { $avg: "$fee" },
       },
     },
   ]);
@@ -112,6 +113,11 @@ const getParcelsStats = async () => {
   const parcelCreatedInLast7DaysPromise = Parcel.countDocuments({
     createdAt: { $gte: sevenDaysAgo },
   });
+
+  const parcelCreatedInLast14DaysPromise = Parcel.countDocuments({
+    createdAt: { $gte: fourteenDaysAgo },
+  });
+
   const parcelCreatedInLast30DaysPromise = Parcel.countDocuments({
     createdAt: { $gte: thirtyDaysAgo },
   });
@@ -131,6 +137,7 @@ const getParcelsStats = async () => {
     parcelPerShippingType,
     avgFeePerParcel,
     parcelCreatedInLast7Days,
+    parcelCreatedInLast14Days,
     parcelCreatedInLast30Days,
     totalParcelCreatedByUniqueSender,
     totalParcelReceiverByUniqueReceiver,
@@ -141,6 +148,7 @@ const getParcelsStats = async () => {
     parcelPerShippingTypePromise,
     avgFeePerParcelPromise,
     parcelCreatedInLast7DaysPromise,
+    parcelCreatedInLast14DaysPromise,
     parcelCreatedInLast30DaysPromise,
     totalParcelCreatedByUniqueSenderPromise,
     totalParcelReceiverByUniqueReceiverPromise,
@@ -153,6 +161,7 @@ const getParcelsStats = async () => {
     parcelPerShippingType,
     avgFeePerParcel,
     parcelCreatedInLast7Days,
+    parcelCreatedInLast14Days,
     parcelCreatedInLast30Days,
     totalParcelCreatedByUniqueSender,
     totalParcelReceiverByUniqueReceiver,

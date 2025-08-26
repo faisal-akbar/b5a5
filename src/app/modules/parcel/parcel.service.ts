@@ -443,7 +443,7 @@ const getAllParcels = async (query: Record<string, string>) => {
   const parcelQuery = new QueryBuilder(
     Parcel.find()
       .populate("sender", "name email phone _id")
-      .populate("receiver", "name email phone -_id")
+      .populate("receiver", "name email phone _id")
       .populate("statusLog.updatedBy", "name role _id")
       .populate("deliveryPersonnel", "name email phone _id"),
     query
@@ -807,7 +807,11 @@ const createParcelByAdmin = async (payload: ICreateParcel, adminId: string) => {
 };
 
 const getParcelById = async (parcelId: string) => {
-  const parcel = await Parcel.findById(parcelId);
+  const parcel = await Parcel.findById(parcelId)
+    .populate("sender", "name email phone _id")
+    .populate("receiver", "name email phone _id")
+    .populate("statusLog.updatedBy", "name role _id")
+    .populate("deliveryPersonnel", "name email phone _id");
 
   if (!parcel) {
     throw new AppError(httpStatus.NOT_FOUND, "Parcel not found");

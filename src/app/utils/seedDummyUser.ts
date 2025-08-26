@@ -8,7 +8,7 @@ const dummyUsers = [
   {
     name: "Walter White",
     role: Role.SENDER,
-    email: "walter.white@example.com",
+    email: "walter.white@parcel.com",
     password: "sender123",
     phone: "01711111111",
     defaultAddress: "123 Sender st",
@@ -17,7 +17,7 @@ const dummyUsers = [
   {
     name: "Alice Smith",
     role: Role.SENDER,
-    email: "alice.sender@example.com",
+    email: "alice.sender@parcel.com",
     password: "sender123",
     phone: "01722222222",
     defaultAddress: "456 5th Ave",
@@ -26,7 +26,7 @@ const dummyUsers = [
   {
     name: "John Doe",
     role: Role.SENDER,
-    email: "john.doe@example.com",
+    email: "john.doe@parcel.com",
     password: "sender123",
     phone: "01733333333",
     defaultAddress: "789 Park Ave",
@@ -35,7 +35,7 @@ const dummyUsers = [
   {
     name: "Jane Smith",
     role: Role.SENDER,
-    email: "jane.smith@example.com",
+    email: "jane.smith@parcel.com",
     password: "sender123",
     phone: "01744444444",
     defaultAddress: "321 Sender st",
@@ -46,7 +46,7 @@ const dummyUsers = [
   {
     name: "Dexter Morgan",
     role: Role.RECEIVER,
-    email: "dexter.receiver@example.com",
+    email: "dexter.receiver@parcel.com",
     password: "receiver123",
     phone: "01733333333",
     defaultAddress: "789 Park Ave",
@@ -55,7 +55,7 @@ const dummyUsers = [
   {
     name: "Sarah Wilson",
     role: Role.RECEIVER,
-    email: "sarah.receiver@example.com",
+    email: "sarah.receiver@parcel.com",
     password: "receiver123",
     phone: "01744444444",
     defaultAddress: "321 Lex Ave",
@@ -64,7 +64,7 @@ const dummyUsers = [
   {
     name: "Mike Davis",
     role: Role.RECEIVER,
-    email: "mike.receiver@example.com",
+    email: "mike.receiver@parcel.com",
     password: "receiver123",
     phone: "01755555555",
     defaultAddress: "654 six ave",
@@ -73,7 +73,7 @@ const dummyUsers = [
   {
     name: "Emily Johnson",
     role: Role.RECEIVER,
-    email: "emily.receiver@example.com",
+    email: "emily.receiver@parcel.com",
     password: "receiver123",
     phone: "01766666666",
     defaultAddress: "111 42nd St",
@@ -82,7 +82,7 @@ const dummyUsers = [
   {
     name: "Michael Brown",
     role: Role.RECEIVER,
-    email: "michael.receiver@example.com",
+    email: "michael.receiver@parcel.com",
     password: "receiver123",
     phone: "01777777777",
     defaultAddress: "222 3rd Ave",
@@ -93,7 +93,7 @@ const dummyUsers = [
   {
     name: "Ahmed Rahman",
     role: Role.DELIVERY_PERSONNEL,
-    email: "ahmed.delivery@example.com",
+    email: "ahmed.delivery@parcel.com",
     password: "delivery123",
     phone: "01766666666",
     defaultAddress: "111 42nd St",
@@ -102,7 +102,7 @@ const dummyUsers = [
   {
     name: "Fatima Khatun",
     role: Role.DELIVERY_PERSONNEL,
-    email: "fatima.delivery@example.com",
+    email: "fatima.delivery@parcel.com",
     password: "delivery123",
     phone: "01777777777",
     defaultAddress: "222 3rd Ave",
@@ -111,7 +111,7 @@ const dummyUsers = [
   {
     name: "Karim Uddin",
     role: Role.DELIVERY_PERSONNEL,
-    email: "karim.delivery@example.com",
+    email: "karim.delivery@parcel.com",
     password: "delivery123",
     phone: "01788888888",
     defaultAddress: "333 Wall St",
@@ -120,7 +120,7 @@ const dummyUsers = [
   {
     name: "Richard Roe",
     role: Role.DELIVERY_PERSONNEL,
-    email: "richard.delivery@example.com",
+    email: "richard.delivery@parcel.com",
     password: "delivery123",
     phone: "01799999999",
     defaultAddress: "999 Admin st, Dhaka",
@@ -129,18 +129,18 @@ const dummyUsers = [
 
   // Admins
   {
-    name: "Admin User",
+    name: "Admin One",
     role: Role.ADMIN,
-    email: "admin@example.com",
+    email: "admin@parcel.com",
     password: "admin123",
     phone: "01799999999",
     defaultAddress: "999 Admin st, Dhaka",
     isVerified: true,
   },
   {
-    name: "Assistant Admin",
+    name: "Admin Two",
     role: Role.ADMIN,
-    email: "assistant.admin@example.com",
+    email: "admin2@parcel.com",
     password: "admin123",
     phone: "01788888888",
     defaultAddress: "888 Admin st",
